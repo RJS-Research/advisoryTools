@@ -1,0 +1,13 @@
+{
+  "name": "rfplite-deck-render",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Renderer B for the RFPLite deck bake-off. PptxGenJS only; no proprietary glue.",
+  "license": "MIT",
+  "scripts": {
+    "render": "node render-pptxgenjs.js sample-outline.md -o out/pptxgenjs.pptx"
+  },
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}

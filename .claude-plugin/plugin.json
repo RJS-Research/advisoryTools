@@ -1,0 +1,6 @@
+{
+  "name": "advisoryTools",
+  "description": "Tools from RJS Research that run inside Claude Code on your Mac. calPreview turns your Mac calendar into a clean weekly view; deckRender turns a markdown outline into an editable PowerPoint deck with native, clickable charts. Everything runs on-device.",
+  "version": "0.3.0",
+  "author": "RJS Research LLC"
+}
