@@ -15,12 +15,16 @@ Claude Code, two lines:
 
 ```
 /plugin marketplace add RJS-Research/advisoryTools
-/plugin install advisoryTools@rjsResearch
+/plugin install advisory-tools@rjsResearch
 ```
 
 That is the whole install. No clone, no token, no script to run.
 
-**Updating later:** `/plugin update advisoryTools`.
+In the Claude Code **desktop app**, `/plugin` opens the Plugins pane without reading the
+rest of the line — use the **+ Add** button there, or run the two commands from a
+terminal (`claude`), where they take their arguments.
+
+**Updating later:** `/plugin update advisory-tools`.
 
 ## Use them
 

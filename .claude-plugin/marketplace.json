@@ -5,7 +5,7 @@
   },
   "plugins": [
     {
-      "name": "advisoryTools",
+      "name": "advisory-tools",
       "source": "./",
       "description": "calPreview (weekly calendar from your Mac calendar) and deckRender (outline to editable PowerPoint deck). Both run entirely on-device."
     }
