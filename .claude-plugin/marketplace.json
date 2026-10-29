@@ -1,13 +1,19 @@
 {
   "name": "rjsResearch",
+  "description": "Tools from RJS Research that run inside Claude Code on your Mac. Each is installed on its own; everything runs on-device.",
   "owner": {
     "name": "RJS Research LLC"
   },
   "plugins": [
     {
-      "name": "advisory-tools",
-      "source": "./",
-      "description": "calPreview (weekly calendar from your Mac calendar) and deckRender (outline to editable PowerPoint deck). Both run entirely on-device."
+      "name": "deck-render",
+      "source": "./plugins/deckRender",
+      "description": "Outline to editable PowerPoint deck, with native clickable charts."
+    },
+    {
+      "name": "cal-preview",
+      "source": "./plugins/calPreview",
+      "description": "Weekly calendar view rendered from your Mac calendar."
     }
   ]
 }

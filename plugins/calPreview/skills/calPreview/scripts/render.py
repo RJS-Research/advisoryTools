@@ -7,8 +7,8 @@ Two views (Rob's spec):
              weekend columns highlighted.
 
 Browser-only deliverable, so it uses absolute-positioned minute-precise blocks
-(not the email-safe rowspan table the FSC availability sheet needs). Palette and
-type mirror brandStandards.md.
+rather than an email-safe rowspan table. Palette and type mirror the brand
+config.
 
 Importable: render(events, view, ref_date) -> html. Also a CLI (stdin = the
 dedupe.py object {events,...} or a bare events array).

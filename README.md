@@ -10,21 +10,23 @@ entirely on your machine — nothing you open, read or build is uploaded anywher
 
 ## Install
 
-You need [Claude Code](https://claude.com/claude-code) installed first. Then, inside
-Claude Code, two lines:
+You need [Claude Code](https://claude.com/claude-code) installed first. Add the
+marketplace once, then install whichever tools you want — they are independent, and
+installing one does not bring the other along:
 
 ```
 /plugin marketplace add RJS-Research/advisoryTools
-/plugin install advisory-tools@rjsResearch
+/plugin install deck-render@rjsResearch
+/plugin install cal-preview@rjsResearch
 ```
 
 That is the whole install. No clone, no token, no script to run.
 
 In the Claude Code **desktop app**, `/plugin` opens the Plugins pane without reading the
-rest of the line — use the **+ Add** button there, or run the two commands from a
-terminal (`claude`), where they take their arguments.
+rest of the line — use the **+ Add** button there, or run the commands from a terminal
+(`claude`), where they take their arguments.
 
-**Updating later:** `/plugin update advisory-tools`.
+**Updating later:** `/plugin update deck-render` (or `cal-preview`).
 
 ## Use them
 

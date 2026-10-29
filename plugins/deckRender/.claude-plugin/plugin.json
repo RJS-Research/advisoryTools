@@ -1,0 +1,8 @@
+{
+  "name": "deck-render",
+  "description": "Turn a markdown outline into an editable PowerPoint deck with native, clickable charts -- not pictures of charts. Optionally inherits a .potx template's slide master so the deck carries your brand. Runs entirely on your machine.",
+  "version": "0.4.0",
+  "author": {
+    "name": "RJS Research LLC"
+  }
+}

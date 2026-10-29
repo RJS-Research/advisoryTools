@@ -1,0 +1,8 @@
+{
+  "name": "cal-preview",
+  "description": "Turn your Mac calendar into a clean weekly view -- pull, de-duplicate, and render a shareable HTML page. Reads your calendar on-device and uploads nothing.",
+  "version": "0.4.0",
+  "author": {
+    "name": "RJS Research LLC"
+  }
+}

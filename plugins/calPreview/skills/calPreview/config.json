@@ -1,0 +1,4 @@
+{
+  "_comment": "Per-user config. personalCalendars: calendar-name substrings (case-insensitive) styled as personal; everything else is work. Edit this to match your own calendar names.",
+  "personalCalendars": ["Home", "Family", "Personal"]
+}
