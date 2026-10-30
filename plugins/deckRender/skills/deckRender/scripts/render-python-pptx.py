@@ -2,15 +2,16 @@
 """Renderer A: python-pptx. Outline markdown to an editable .pptx with native charts.
 
     python3 render-python-pptx.py sample-outline.md -o out/a.pptx [--template brand.potx]
+                                 [--brand /path/to/your/brand.json]
 
-Charts are real PowerPoint chart objects, not images: the client can click into the
-data. That matters here because the crossover number is the load-bearing claim of the
-deck, and a number nobody can interrogate invites the suspicion that it was reverse
-engineered.
+Charts are real PowerPoint chart objects, not images: a reader can click into the
+data. That matters whenever a deck's argument turns on a number, because a figure
+nobody can interrogate invites the suspicion that it was reverse engineered.
 
 Branding comes from brand.json, never from constants in this file. Re-brand by
-swapping that file. If --template is given, its slide master supplies the look and
-brand.json only fills what the template leaves open.
+swapping that file, or point --brand at your own copy anywhere on disk. If
+--template is given, its slide master supplies the look and brand.json only fills
+what the template leaves open.
 """
 
 import argparse
@@ -21,16 +22,42 @@ import pathlib
 import sys
 import zipfile
 
-from pptx import Presentation
-from pptx.chart.data import CategoryChartData
-from pptx.dml.color import RGBColor
-from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
-from pptx.util import Inches, Pt
+try:
+    from pptx import Presentation
+    from pptx.chart.data import CategoryChartData
+    from pptx.dml.color import RGBColor
+    from pptx.enum.chart import XL_CHART_TYPE, XL_LEGEND_POSITION
+    from pptx.util import Inches, Pt
+except ImportError:
+    # The one dependency that does not ship with macOS. A bare
+    # ModuleNotFoundError here tells the user nothing they can act on, and the
+    # Homebrew case below is the likeliest way the obvious install fails.
+    sys.exit(
+        "deckRender needs the python-pptx package, which does not ship with macOS.\n"
+        "\n"
+        "    python3 -m pip install --user python-pptx\n"
+        "\n"
+        "If that fails with 'error: externally-managed-environment', your python3 is\n"
+        "Homebrew's and refuses to install into itself. Three ways out:\n"
+        "\n"
+        "  1. Use the python3 Apple ships, which has no such restriction:\n"
+        "       /usr/bin/python3 -m pip install --user python-pptx\n"
+        "       /usr/bin/python3 " + __file__ + " ...\n"
+        "\n"
+        "  2. Make a virtual environment, and render with ITS python:\n"
+        "       python3 -m venv ~/.deckRender\n"
+        "       ~/.deckRender/bin/pip install python-pptx\n"
+        "       ~/.deckRender/bin/python " + __file__ + " ...\n"
+        "\n"
+        "  3. Install into your user site anyway. Simplest, but Homebrew may warn\n"
+        "     about it when it upgrades python:\n"
+        "       python3 -m pip install --user --break-system-packages python-pptx\n"
+    )
 
 HERE = pathlib.Path(__file__).resolve().parent
 
-# The parser filename carries a hyphen (ICM naming), which is not importable, so load
-# it by path rather than renaming the file away from the convention.
+# The parser filename carries a hyphen, which is not importable, so load it by path
+# rather than renaming the file.
 _spec = importlib.util.spec_from_file_location("outline_parser", HERE / "outline-parser.py")
 outline_parser = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(outline_parser)
@@ -109,9 +136,8 @@ def open_template(template):
 
     python-pptx refuses a genuine .potx outright: pptx.api.Presentation checks the
     package content type and raises ValueError on
-    presentationml.template.main+xml. The README's earlier claim that --template
-    "opens a real .potx" was verified against a stand-in .pptx, not a true
-    template, and did not hold when brand.potx was first built (2026-08-22).
+    presentationml.template.main+xml -- so "opens a real .potx" needs this step to
+    be true at all, and a stand-in .pptx will pass without it.
 
     The two formats differ only in that content type, so a .potx is rewritten to
     the presentation type in memory. Nothing on disk is touched: brand.potx stays
@@ -142,8 +168,11 @@ def open_template(template):
     return Presentation(buf)
 
 
-def render(outline_path, out_path, template=None):
-    brand = json.loads((HERE / "brand.json").read_text())
+def render(outline_path, out_path, template=None, brand_path=None):
+    # Default to the brand.json beside this script, but never require it: the copy
+    # in an installed plugin lives in a versioned cache that `plugin update`
+    # replaces, so a client's own palette has to be able to live somewhere else.
+    brand = json.loads(pathlib.Path(brand_path or HERE / "brand.json").read_text())
     deck = outline_parser.parse(outline_path)
     L = brand["layout"]
 
@@ -211,9 +240,11 @@ def main():
     ap.add_argument("outline")
     ap.add_argument("-o", "--out", default="out/python-pptx.pptx")
     ap.add_argument("--template", default=None, help="optional .potx/.pptx whose master supplies the look")
+    ap.add_argument("--brand", default=None,
+                    help="brand.json to use (default: the one beside this script)")
     a = ap.parse_args()
 
-    prs, out = render(a.outline, a.out, a.template)
+    prs, out = render(a.outline, a.out, a.template, a.brand)
     n_charts = sum(1 for s in prs.slides for sh in s.shapes if sh.has_chart)
     n_notes = sum(1 for s in prs.slides if s.has_notes_slide and s.notes_slide.notes_text_frame.text.strip())
     print(f"python-pptx  -> {out}")

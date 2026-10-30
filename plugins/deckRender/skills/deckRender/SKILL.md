@@ -30,6 +30,22 @@ to install it:
 python3 -m pip install --user python-pptx
 ```
 
+**If that install fails with `error: externally-managed-environment`,** the user's
+`python3` is Homebrew's, which refuses to install into itself. Do not retry the same
+command. Offer, in this order:
+
+```bash
+/usr/bin/python3 -m pip install --user python-pptx   # Apple's python3, no restriction
+                                                     # -- then render with /usr/bin/python3
+python3 -m venv ~/.deckRender && ~/.deckRender/bin/pip install python-pptx
+                                                     # -- then render with ~/.deckRender/bin/python
+python3 -m pip install --user --break-system-packages python-pptx
+                                                     # simplest; Homebrew may warn later
+```
+
+The renderer prints this same list itself if it is ever reached without the package,
+so a user who runs it by hand is not left with a bare traceback.
+
 If `pip` itself is missing or the install is refused, say so plainly and stop. Do not
 fall back to the JavaScript renderer to route around it -- that one needs `npm install`
 and cannot use a `.potx` template, so it is a different tool, not a substitute. Once
@@ -37,13 +53,22 @@ and cannot use a `.potx` template, so it is a different tool, not a substitute. 
 
 ## Run it
 
+The scripts live in this skill's own `scripts/` folder. When the skill is installed as
+a plugin, that folder sits inside Claude Code's plugin cache, so resolve it once rather
+than guessing at a path:
+
 ```bash
-cd scripts
-python3 render-python-pptx.py outline.md -o out/deck.pptx
-python3 render-python-pptx.py outline.md -o out/deck.pptx --template brand.potx
-node render-pptxgenjs.js outline.md -o out/deck.pptx     # needs: npm install
-python3 compare.py                                        # render both, gate the result
+SCRIPTS="$(ls -d ~/.claude/plugins/cache/*/deck-render/*/skills/deckRender/scripts | tail -1)"
 ```
+
+```bash
+python3 "$SCRIPTS/render-python-pptx.py" outline.md -o deck.pptx
+python3 "$SCRIPTS/render-python-pptx.py" outline.md -o deck.pptx --template ~/Documents/deckRender/brand.potx
+node "$SCRIPTS/render-pptxgenjs.js" outline.md -o deck.pptx    # needs: npm install, run in $SCRIPTS
+```
+
+Write the deck somewhere the user owns, never into `$SCRIPTS` -- see **Branding** for
+why that folder is not a place to keep anything.
 
 Prints a line like `slides=5  native charts=2  slides with notes=4`. Read it back to
 the user -- a chart count of 0 when the outline has chart blocks means a malformed
@@ -53,7 +78,9 @@ JSON spec, not an empty deck.
 Python, and it is the only one that can open a real `.potx` and inherit its slide
 master. `render-pptxgenjs.js` cannot import a template -- its API only offers
 `defineSlideMaster()`, which means re-coding the master in JavaScript by hand. Keep
-the JS one for the case where python-pptx's staleness bites.
+the JS one for the case where python-pptx's staleness bites. Its `node_modules` also
+lives in `$SCRIPTS`, so `plugin update` removes it and `npm install` has to be re-run
+-- one more reason the Python renderer is the default.
 
 ## The outline dialect
 
@@ -79,18 +106,41 @@ reference for the dialect -- read it before writing your first outline.
 `brand.json` holds the palette, fonts and slide size. Nothing is hardcoded in renderer
 code, so re-branding is a file swap, never a code edit.
 
+⛔ **Never edit `brand.json` or `brand.potx` inside `$SCRIPTS`, and never tell the user
+to.** That folder is a versioned plugin cache: the next `claude plugin update
+deck-render` installs into a new version directory and prunes the old one, taking the
+user's palette, their `brand.potx` and any `node_modules` with it. The copies that ship
+there are a neutral starting point to be *copied out*, not a config file to edit.
+
+**Set a brand up in a folder the user owns**, once:
+
 ```bash
-python3 build-potx.py            # regenerate brand.potx from brand.json
+mkdir -p ~/Documents/deckRender
+cp "$SCRIPTS/brand.json" ~/Documents/deckRender/brand.json     # then edit this copy
+python3 "$SCRIPTS/build-potx.py" --brand ~/Documents/deckRender/brand.json \
+                                 -o     ~/Documents/deckRender/brand.potx
 ```
+
+Then every render names both files, and an update cannot touch either:
+
+```bash
+python3 "$SCRIPTS/render-python-pptx.py" outline.md -o deck.pptx \
+        --template ~/Documents/deckRender/brand.potx \
+        --brand    ~/Documents/deckRender/brand.json
+```
+
+Both are needed and they do different jobs: `--template` supplies the slide master,
+`--brand` supplies the colours and fonts the renderer draws with. Passing only
+`--template` leaves every shape in the shipped neutral palette.
 
 The template supplies four things the blank layout still shows: the theme colour
 scheme (so anything a human adds later picks brand colours out of PowerPoint's own
 picker), the theme font scheme, master decoration, and the 16:9 slide size. It does
 **not** supply placeholder geometry -- the renderer places every shape explicitly.
 
-**To carry your own brand:** edit `brand.json`, re-run `build-potx.py`, then render
-with `--template brand.potx`. To use a designer-made template instead, point
-`--template` straight at their `.potx` and skip `build-potx.py` entirely.
+If the user already has a designer-made `.potx`, skip `build-potx.py`: point
+`--template` straight at their file. Pair it with a `--brand` copy whose colours match,
+or the shapes and the master will disagree.
 
 ## Your job as the assistant
 
@@ -101,22 +151,17 @@ with `--template brand.potx`. To use a designer-made template instead, point
 3. If a chart matters to the argument, say so and confirm it rendered as a chart part
    rather than silently dropping.
 
-## Gate before shipping changes
+## Checking a render
 
-```bash
-cd scripts && npm install                            # one time -- compare.py needs both renderers
-cd scripts && python3 compare.py                     # must exit 0
-cd scripts && python3 compare.py --negative-control   # proves the gate can fail
-```
+Render `sample-outline.md` and read the printed counts back. It exercises every path in
+the dialect, so if its chart count is 2 the chart path works on this machine. That
+needs nothing but `python-pptx`.
 
-`compare.py` asserts both decks carry the same content, that charts are native chart
-parts rather than pictures, and that body text is real text in the slide XML.
-
-**It renders with both engines, so it needs the JS one installed.** Without
-`npm install` it dies on a `node` subprocess -- that is a missing optional dependency,
-not a broken deck. The Python renderer alone needs nothing but `python-pptx`, and you
-can verify it on its own by rendering `sample-outline.md` and reading the printed
-counts.
+*Maintainer gate, not part of using the skill:* `compare.py` renders with **both**
+engines and asserts they agree, that charts are native chart parts rather than
+pictures, and that body text is real text in the slide XML. It therefore needs the JS
+renderer installed (`npm install` in `$SCRIPTS`), and `--negative-control` proves it
+can fail. A user who only wants a deck never needs to run it.
 
 ## Known limits
 
@@ -127,3 +172,7 @@ counts.
   actively maintained. That is the standing argument for keeping the JS renderer.
 - `sample-outline.md` numbers are invented to exercise the chart paths. They are not
   researched and its title slide says so. Never leave fixture numbers in a real deck.
+- `npm install`, for the JS renderer only, reports two high-severity advisories against
+  `image-size` (transitive through `pptxgenjs`). They are denial-of-service bugs in
+  image parsers this skill never calls, and the only offered fix is a breaking
+  downgrade. Say so if a user asks; do not run `npm audit fix --force`.

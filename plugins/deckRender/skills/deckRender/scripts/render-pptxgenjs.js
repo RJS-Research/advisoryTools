@@ -3,13 +3,18 @@
  * Renderer B: PptxGenJS. Outline markdown to an editable .pptx with native charts.
  *
  *     node render-pptxgenjs.js sample-outline.md -o out/pptxgenjs.pptx
+ *                                 [--brand /path/to/your/brand.json]
  *
- * This is the engine ICM's course-deck-production workspace uses, reached here
- * directly rather than through its html2pptx glue. That glue originates in
- * Anthropic's proprietary pptx skill, which the ICM repo vendors into an MIT
- * project; copying it into a client repo would carry that licence in with it.
- * Calling PptxGenJS (MIT) ourselves avoids the question entirely and costs about
- * forty lines.
+ * `npm install` reports two high-severity advisories against image-size, pulled in
+ * transitively by pptxgenjs: a denial of service in its JXL, HEIF and ICNS parsers
+ * (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr). Nothing here parses an image -- the
+ * deck is built from an outline and drawn as shapes -- so the vulnerable code is
+ * never reached. `npm audit fix --force` only offers a breaking pptxgenjs
+ * downgrade, which is why the advisories are left standing rather than patched.
+ *
+ * Calls PptxGenJS (MIT) directly rather than going through an HTML-to-pptx
+ * conversion layer. Fewer moving parts, and driving the library ourselves costs
+ * about forty lines of glue.
  *
  * Reads the SAME outline via outline-parser.py, so comparing the two renderers
  * compares renderers rather than two different readings of one file.
@@ -21,16 +26,23 @@ const path = require("path");
 const PptxGenJS = require("pptxgenjs");
 
 const HERE = __dirname;
-const brand = JSON.parse(fs.readFileSync(path.join(HERE, "brand.json"), "utf8"));
+
+// Defaults to the brand.json beside this script. It is deliberately replaceable:
+// in an installed plugin that file sits in a versioned cache that `plugin update`
+// replaces, so a client's own palette has to be able to live somewhere else.
+let brand = JSON.parse(fs.readFileSync(path.join(HERE, "brand.json"), "utf8"));
 
 function parseArgs(argv) {
-  const a = { outline: null, out: "out/pptxgenjs.pptx" };
+  const a = { outline: null, out: "out/pptxgenjs.pptx", brand: null };
   for (let i = 2; i < argv.length; i++) {
     if (argv[i] === "-o" || argv[i] === "--out") a.out = argv[++i];
+    else if (argv[i] === "--brand") a.brand = argv[++i];
     else if (!a.outline) a.outline = argv[i];
   }
   if (!a.outline) {
-    console.error("usage: node render-pptxgenjs.js <outline.md> [-o out.pptx]");
+    console.error(
+      "usage: node render-pptxgenjs.js <outline.md> [-o out.pptx] [--brand brand.json]"
+    );
     process.exit(2);
   }
   return a;
@@ -48,6 +60,7 @@ const CHART_TYPES = { bar: "bar", column: "bar", line: "line", pie: "pie" };
 
 function main() {
   const args = parseArgs(process.argv);
+  if (args.brand) brand = JSON.parse(fs.readFileSync(args.brand, "utf8"));
   const deck = parseOutline(args.outline);
   const L = brand.layout;
   const F = brand.fonts;

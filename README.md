@@ -78,19 +78,52 @@ before the first render and offers to install it:
 python3 -m pip install --user python-pptx
 ```
 
+**If that fails with `error: externally-managed-environment`,** your `python3` is
+Homebrew's, which refuses to install packages into itself. Retrying will not help.
+Three ways out, simplest first:
+
+```bash
+/usr/bin/python3 -m pip install --user python-pptx        # Apple's python3, unrestricted
+python3 -m venv ~/.deckRender && ~/.deckRender/bin/pip install python-pptx
+python3 -m pip install --user --break-system-packages python-pptx
+```
+
+With either of the first two you must then render with *that* interpreter
+(`/usr/bin/python3 …` or `~/.deckRender/bin/python …`), not a bare `python3` — tell
+Claude which one you used. The third is simplest, at the cost of a Homebrew warning
+the next time it upgrades python. The renderer prints these options itself if it is
+ever run without the package.
+
 ### Making it yours
 
 **The deck ships deliberately unbranded** — a neutral grey-and-blue placeholder, not
-anyone's house style. Put your own brand in by editing `brand.json` in the deckRender
-skill folder (palette, fonts, slide size), then regenerating the template:
+anyone's house style. Two files carry the brand: `brand.json` (palette, fonts, slide
+size) and `brand.potx` (the slide master built from it). Nothing is hardcoded in
+renderer code, so re-branding is a file swap, never a code edit.
+
+⛔ **Do not edit them where they ship.** They live in Claude Code's versioned plugin
+cache, and the next `/plugin update deck-render` installs into a new version folder and
+prunes the old one — taking your palette with it. Copy them somewhere you own first:
 
 ```bash
-python3 build-potx.py
+SCRIPTS="$(ls -d ~/.claude/plugins/cache/*/deck-render/*/skills/deckRender/scripts | tail -1)"
+
+mkdir -p ~/Documents/deckRender
+cp "$SCRIPTS/brand.json" ~/Documents/deckRender/brand.json     # then edit this copy
+python3 "$SCRIPTS/build-potx.py" --brand ~/Documents/deckRender/brand.json \
+                                 -o     ~/Documents/deckRender/brand.potx
 ```
 
-Nothing is hardcoded in renderer code, so re-branding is a file swap. If you already
-have a designer-made PowerPoint template, skip all of that and point the renderer at
-your `.potx` directly with `--template` — it inherits the real slide master.
+Then each render names both — `--template` for the slide master, `--brand` for the
+colours the renderer draws with. Both are needed; `--template` alone leaves every shape
+in the neutral palette. Tell Claude where the two files live and it will pass them.
+
+If you already have a designer-made PowerPoint template, skip `build-potx.py` and point
+`--template` straight at your `.potx` — it inherits the real slide master.
+
+The plugin carries its own README with the full branding walk-through, the outline
+dialect and a troubleshooting table. It is installed alongside the skill, and is in the
+repo at `plugins/deckRender/README.md`.
 
 ## Known limits
 
@@ -104,10 +137,22 @@ leave fixture numbers in a real deck.
 
 ## If something goes wrong
 
-Ask Claude to *"run the calPreview doctor"*. It probes each step — is the calendar
-reachable, is access granted, does a real pull work — and writes a
+**calPreview.** Ask Claude to *"run the calPreview doctor"*. It probes each step — is
+the calendar reachable, is access granted, does a real pull work — and writes a
 `deliveryReport_<timestamp>.md`. Send that file back; it describes the setup pathway,
 not your calendar contents, and it is the fastest way to get the next version right.
+The doctor is calPreview's own; it cannot diagnose deckRender.
+
+**deckRender.** Ask Claude, and say which of these you are seeing.
+
+| What you see | What it means |
+|---|---|
+| `No module named 'pptx'` | The extra package above is not installed for the `python3` in use. |
+| `error: externally-managed-environment` | Homebrew python. See the three options above. |
+| `native charts=0` with chart blocks in the outline | A malformed JSON chart spec, not an empty deck. |
+| Your brand reverted to grey and blue | A `/plugin update` replaced the cache copy. Keep `brand.json` and `brand.potx` in a folder you own, as above. |
+| `not a template, no template content type` | The file given to `--template` is not a real `.potx`. |
+| Charts render but look wrong | Possible by design: the check reads the file format, not the picture. Describe what you see. |
 
 ---
 RJS Research LLC

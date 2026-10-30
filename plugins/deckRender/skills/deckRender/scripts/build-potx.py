@@ -5,9 +5,9 @@
     python3 build-potx.py -o other.potx
 
 Why this exists. `render-python-pptx.py --template` opens a real .potx and
-inherits its slide master, which is the one capability PptxGenJS does not have
-(README, "The difference that actually decides it"). Until now the --template
-path was proven only against a stand-in. This builds the real one.
+inherits its slide master, which is the one capability PptxGenJS does not have.
+This builds a real template from brand.json, so that path has something genuine
+to open rather than a stand-in .pptx.
 
 What a template can and cannot do here. The renderer draws on `slide_layouts[6]`,
 the blank layout, and places every shape explicitly. So the template does NOT

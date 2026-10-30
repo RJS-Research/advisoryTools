@@ -7,9 +7,8 @@ footer: ILLUSTRATIVE FIXTURE, SYNTHETIC NUMBERS, NOT CLIENT DATA
   Fixture for the two renderers. Client neutral by construction.
 
   EVERY NUMBER BELOW IS INVENTED to exercise the chart paths. None of it is
-  researched, sourced, or attached to any engagement. Real figures arrive from
-  the spikes in _prompts/4a..4d and are never authored here. See the project
-  rule: never guess a financial figure.
+  researched or sourced. Never let one of these figures survive into a real
+  deck: replace every number with a verified one before the deck leaves you.
 
   Dialect, deliberately small so both renderers can implement it identically:
     # Title            deck title slide (with optional subtitle:/footer: lines)
