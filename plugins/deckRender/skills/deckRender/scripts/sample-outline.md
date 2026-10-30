@@ -4,7 +4,7 @@ subtitle: Where to sit on the outsource to insource spectrum
 footer: ILLUSTRATIVE FIXTURE, SYNTHETIC NUMBERS, NOT CLIENT DATA
 
 <!--
-  Bake-off fixture for the two renderers. Client neutral by construction.
+  Fixture for the two renderers. Client neutral by construction.
 
   EVERY NUMBER BELOW IS INVENTED to exercise the chart paths. None of it is
   researched, sourced, or attached to any engagement. Real figures arrive from

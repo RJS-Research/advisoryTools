@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render deduped events into a brand-styled weekly calendar (HTML).
 
-Two views (Rob's spec):
+Two views:
   week     — a fixed Sun..Sat calendar week containing the reference date.
   rolling  — the reference date through the next 6 days (7 columns), with
              weekend columns highlighted.

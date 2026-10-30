@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Shared parser for the deck outline dialect.
 
-Both renderers consume this, so a bake-off compares RENDERERS rather than two
+Both renderers consume this, so comparing them compares RENDERERS rather than two
 different readings of the same file. Imported by render-python-pptx.py and dumped
 to JSON for render-pptxgenjs.js via `--json`.
 

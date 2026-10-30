@@ -11,8 +11,8 @@
  * Calling PptxGenJS (MIT) ourselves avoids the question entirely and costs about
  * forty lines.
  *
- * Reads the SAME outline via outline-parser.py, so a bake-off compares renderers
- * rather than two different readings of one file.
+ * Reads the SAME outline via outline-parser.py, so comparing the two renderers
+ * compares renderers rather than two different readings of one file.
  */
 
 const { execFileSync } = require("child_process");

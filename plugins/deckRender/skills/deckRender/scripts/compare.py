@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bake-off comparator and gate for the two renderers.
+"""Comparator and gate for the two renderers.
 
     python3 compare.py                      # render both, compare, report
     python3 compare.py --negative-control   # prove the editability check can fail
